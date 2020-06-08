@@ -73,7 +73,66 @@ public class ClientConsole implements ChatIF
       while (true) 
       {
         message = fromConsole.readLine();
-        client.handleMessageFromClientUI(message);
+
+        //hml #command
+        char messagecheck = message.charAt(0);
+        if (messagecheck == '#'){
+          String[] cmessage = message.split(" ");
+          String command = cmessage[0];
+          System.out.println(command);
+          if (command.equals("#quit")){
+            System.out.println("The client has quit");
+            client.quit();
+          }
+          else if (command.equals("#logoff")){
+            client.closeConnection();
+          }
+          else if (command.equals("#sethost")){
+            if (client.isConnected()){
+              System.out.println("The client is still online");
+            }
+            else{
+              String newhost = cmessage[1];
+              int oldport = client.getPort();
+              ClientConsole newHostchat= new ClientConsole(newhost, oldport);
+              newHostchat.accept();
+            }
+          }
+          else if (command.equals("#setport")){
+            if (client.isConnected()){
+              System.out.println("The client is still online");
+            }
+            else{
+              int newport = Integer.parseInt(cmessage[1]);
+              String oldhost = client.getHost();
+              ClientConsole newPortchat = new ClientConsole(oldhost, newport);
+              newPortchat.accept();
+            }
+          }
+          else if (command.equals("#login")){
+            if (client.isConnected()){
+              System.out.println("The client is still online");
+            }
+            else{
+              String newhost = cmessage[1];
+              int newport = Integer.parseInt(cmessage[2]);
+              ClientConsole newClientchat= new ClientConsole(newhost, newport);
+              newClientchat.accept();
+            }
+          }
+          else if (command.equals("#gethost")){
+            System.out.println(client.getHost());
+          }
+          else if (command.equals("#getport")){
+            System.out.println(client.getPort());
+          }
+          else{
+            System.out.println("Wrong command.");
+          }
+        }
+        else{
+          client.handleMessageFromClientUI(message);
+        }
       }
     } 
     catch (Exception ex) 
@@ -105,17 +164,42 @@ public class ClientConsole implements ChatIF
   public static void main(String[] args) 
   {
     String host = "";
+    String id = "";
     int port = 0;  //The port number
+    
+    try{
+      id = args[0];
+    }
+    catch(ArrayIndexOutOfBoundsException e)
+    {
+      id = "";
+    }
 
     try
     {
-      host = args[0];
+      host = args[1];
     }
     catch(ArrayIndexOutOfBoundsException e)
     {
       host = "localhost";
     }
-    ClientConsole chat= new ClientConsole(host, DEFAULT_PORT);
+    
+    try{
+      port = Interger.parseInt(args[2]);
+    }
+    catch (Throwable e)
+    {
+      port = DEFAULT_PORT;
+    }
+    
+    ClientConsole chat = new ClientConsole(host, port);
+    chat.client.setloginid(id);
+    
+    if(chat.client.getloginid().equals("")){
+      System.out.println("Error - No login ID specified. Connection aborted.");
+      chat.client.quit();
+    }
+    chat.client.handleMessageFromClientUI("#login " + chat.client.getloginid());
     chat.accept();  //Wait for console data
   }
 }
