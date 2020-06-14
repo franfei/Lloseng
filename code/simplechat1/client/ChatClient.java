@@ -26,6 +26,8 @@ public class ChatClient extends AbstractClient
    * the display method in the client.
    */
   ChatIF clientUI; 
+  
+  private String loginid; //This is for to have a string for login id. 
 
   
   //Constructors ****************************************************
@@ -76,6 +78,27 @@ public class ChatClient extends AbstractClient
         ("Could not send message to server.  Terminating client.");
       quit();
     }
+  }
+  
+  protected void connectionClosed(){
+  
+  System.out.println("The connection is closed!");
+  
+  }
+  
+  protected void connectionException(Exception exception)
+  {
+    System.out.println("Abnormal termination of connection!");
+  }
+  
+  public void setloginid(String id)
+  {
+    this.loginid = id; 
+  }
+  
+  public String getloginid()
+  {
+    return loginid; 
   }
   
   /**
