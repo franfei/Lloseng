@@ -1,10 +1,9 @@
 // This file contains material supporting section 3.7 of the textbook:
 // "Object Oriented Software Engineering" and is issued under the open-source
 // license found at www.lloseng.com 
-
+import common.*;
 import java.io.*;
 import ocsf.server.*;
-
 /**
  * This class overrides some of the methods in the abstract 
  * superclass in order to give more functionality to the server.
@@ -23,20 +22,20 @@ public class EchoServer extends AbstractServer
    * The default port to listen on.
    */
   final public static int DEFAULT_PORT = 5555;
-  
+  private boolean sc = false; 
+  ChatIF = UIOfserver;
   //Constructors ****************************************************
-  
   /**
    * Constructs an instance of the echo server.
    *
    * @param port The port number to connect on.
    */
-  public EchoServer(int port) 
+  public EchoServer(int port,ChatIF UIOfserver) 
   {
+    this UIOfserver = UIOfserver；
     super(port);
   }
 
-  
   //Instance methods ************************************************
   
   /**
@@ -48,8 +47,26 @@ public class EchoServer extends AbstractServer
   public void handleMessageFromClient
     (Object msg, ConnectionToClient client)
   {
-    System.out.println("Message received: " + msg + " from " + client);
-    this.sendToAllClients(msg);
+    try{
+    String idcommand = String (msg);
+    String[] aidcommand = idcommand.split(" ");
+    if (aidcommand[0].equals("#login")){
+    if (client.getInfo("loginid")==null){
+    String idname = aidcommand[1];//no loginid 
+    client.setInfo("loginid",idname);
+    this.sendToAllClients(client.getInfo("loginid") + " already logged in!");
+    }
+    else{
+    client.sendToClient("There is an error!");
+    client.close;
+    }
+    }
+    }
+    catch(Exception ex){
+    }
+    System.out.println("Message received: " + msg + " from " + client.getInfo("loginid"));
+    Object lmsg = (String)(client.getInfo("loginid"))+ " " + (String)(msg);
+    this.sendToAllClients(lmsg);
   }
     
   /**
@@ -70,6 +87,20 @@ public class EchoServer extends AbstractServer
   {
     System.out.println
       ("Server has stopped listening for connections.");
+  }
+  
+  protected void clientConnected(ConnectionToClient client)
+  {
+    System.out.println(client.getInfo("loginid"+" connected!"));
+    System.out.println("There is another client waiting to connect!");
+  }
+  
+  protected void serverClosed(){
+  sc = true;
+  }
+  
+  protected boolean serveralreadyClosed(){
+  	return sc;
   }
   
   //Class methods ***************************************************
@@ -95,6 +126,7 @@ public class EchoServer extends AbstractServer
     }
 	
     EchoServer sv = new EchoServer(port);
+    ServerConsole serverco = new ServerConsole(sv);
     
     try 
     {
@@ -104,6 +136,7 @@ public class EchoServer extends AbstractServer
     {
       System.out.println("ERROR - Could not listen for clients!");
     }
+    serverco.accept();
   }
 }
 //End of EchoServer class
