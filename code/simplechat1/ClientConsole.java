@@ -31,8 +31,6 @@ public class ClientConsole implements ChatIF
    * The instance of the client that created this ConsoleChat.
    */
   ChatClient client;
-
-  
   //Constructors ****************************************************
 
   /**
@@ -41,23 +39,23 @@ public class ClientConsole implements ChatIF
    * @param host The host to connect to.
    * @param port The port to connect on.
    */
-  public ClientConsole(String host, int port) 
+  public ClientConsole(String host, int port, String loginid) 
   {
+  
+    client = new ChatClient(loginid,host,port,this);
     try 
     {
-      client= new ChatClient(host, port, this);
+      client.openConnection();
+      //client= new ChatClient(host, port, this);
     } 
     catch(IOException exception) 
     {
       System.out.println("Error: Can't setup connection!"
                 + " Terminating client.");
-      System.exit(1);
+      //System.exit(1);
     }
   }
-
-  
   //Instance methods ************************************************
-  
   /**
    * This method waits for input from the console.  Once it is 
    * received, it sends it to the client's message handler.
@@ -73,7 +71,62 @@ public class ClientConsole implements ChatIF
       while (true) 
       {
         message = fromConsole.readLine();
-        client.handleMessageFromClientUI(message);
+
+        //hml #command
+        char messagecheck = message.charAt(0);
+        if (messagecheck == '#'){
+          String[] cmessage = message.split(" ");
+          String command = cmessage[0];
+          System.out.println(command);
+          if (command.equals("#quit")){
+            System.out.println("The client has quitted the chat!");
+            client.quit();
+          }
+          else if (command.equals("#logoff")){
+            client.closeConnection();
+          }
+          else if (command.equals("#sethost")){
+            if (client.isConnected()){
+              System.out.println("The client is already connected!");
+            }
+            else{
+              String newhost = cmessage[1];
+              client.setHost(newhost);
+              System.out.println("Set the host to: " + newhost);
+            }
+          }
+          else if (command.equals("#setport")){
+            if (client.isConnected()){
+              System.out.println("The client is already connected!");
+            }
+            else{
+              int newport = Integer.parseInt(cmessage[1]);
+              client.setPort(newport);
+              System.out.println("Set the port: " + newport);
+            }
+          }
+          else if (command.equals("#login")){
+            if (client.isConnected()){
+              System.out.println("The client is already connected!");
+            }
+            else{
+              client.openConnection();
+              client.handleMessageFromClientUI("login number: " + client.getloginid());
+            }
+          }
+          else if (command.equals("#gethost")){
+            System.out.println(client.getHost());
+          }
+          else if (command.equals("#getport")){
+            System.out.println(client.getPort());
+          }
+          else{
+            System.out.println("This is not correct!");
+          }
+        }
+        else{
+          client.handleMessageFromClientUI(message);
+        }
       }
     } 
     catch (Exception ex) 
@@ -82,7 +135,6 @@ public class ClientConsole implements ChatIF
         ("Unexpected error while reading from console!");
     }
   }
-
   /**
    * This method overrides the method in the ChatIF interface.  It
    * displays a message onto the screen.
@@ -92,11 +144,8 @@ public class ClientConsole implements ChatIF
   public void display(String message) 
   {
     System.out.println("> " + message);
-  }
-
-  
+  } 
   //Class methods ***************************************************
-  
   /**
    * This method is responsible for the creation of the Client UI.
    *
@@ -106,7 +155,13 @@ public class ClientConsole implements ChatIF
   {
     String host = "";
     int port = 0;  //The port number
-
+    String id = "";
+    try{
+      id = args[0];
+    }
+    catch(ArrayIndexOutOfBoundsException e){
+      id = "";
+    } //do the same for id (host)
     try
     {
       host = args[0];
@@ -115,7 +170,24 @@ public class ClientConsole implements ChatIF
     {
       host = "localhost";
     }
+    try{
+      port = Integer.parseInt(args[2]);
+    }catch(Throwable e)
+    {
+      port = DEFAULT_PORT;
+    }   
+    
     ClientConsole chat= new ClientConsole(host, DEFAULT_PORT);
+    
+    if (chat.client.isConnected())
+    {
+      if (chat.client.getloginid().equals(""))
+      {
+        System.out.println("No login ID! So can't connect!");
+        chat.client.quit();
+      }
+      chat.client.handleMessageFromClientUI("The login number: " + chat.client.getloginid());
+    }
     chat.accept();  //Wait for console data
   }
 }
